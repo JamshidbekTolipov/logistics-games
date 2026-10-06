@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US States Abbreviation Quiz - Logistics Game</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f6;
+            transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+        }
+
+        /* To'g'ri javobda yashil miltillash effekti */
+        body.flash-correct {
+            background-color: #10b981 !important; /* Soft Emerald Green */
+        }
+
+        /* Noto'g'ri javobda qizil miltillash effekti */
+        body.flash-incorrect {
+            background-color: #f43f5e !important; /* Soft Rose Red */
+        }
+
+        /* Kartalar uchun zamonaviy soya */
+        .card-shadow {
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.08), 0 18px 36px -18px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-glow {
+            box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Noto'g'ri javob berilgandagi titrash (Shake) animatsiyasi */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-12px); }
+            40%, 80% { transform: translateX(12px); }
+        }
+
+        .shake-anim {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* Yangi shtat chiqqandagi silliq paydo bo'lish animatsiyasi */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.92) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .pop-in {
+            animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-4 sm:p-8 select-none">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="w-full max-w-4xl flex items-center justify-between z-20">
+        <!-- Yuqori Chap: Uycha (Home) ikonkasi -->
+        <a href="index.html" title="Asosiy sahifaga qaytish" class="w-12 h-12 bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 card-shadow flex items-center justify-center text-gray-800 hover:scale-110 active:scale-95 transition-all duration-300">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+        </a>
+
+        <!-- Yuqori O'ng: Statistikalar (To'g'ri va Urinishlar) -->
+        <div class="flex items-center space-x-3 bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-white/80 card-shadow text-sm font-semibold text-gray-700">
+            <div class="flex items-center space-x-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span>To'g'ri javob: <strong id="correctScore" class="text-gray-900 font-extrabold text-base">0</strong></span>
+            </div>
+            <span class="text-gray-300">|</span>
+            <div class="flex items-center space-x-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span>Urinishlar: <strong id="attemptsScore" class="text-gray-900 font-extrabold text-base">0</strong></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN GAME CARD CONTAINER -->
+    <main class="w-full max-w-lg my-auto py-6">
+        <div id="gameCard" class="w-full bg-white/90 backdrop-blur-xl rounded-[36px] p-8 sm:p-10 card-shadow border border-white/80 text-center relative overflow-hidden transition-all duration-300">
+            
+            <!-- Top Tag -->
+            <div class="inline-flex items-center space-x-2 bg-gray-100 px-3.5 py-1 rounded-full text-xs font-bold text-gray-500 tracking-wider uppercase mb-6">
+                <span>Amerika shtatlari</span>
+            </div>
+
+            <!-- Subtitle Instructions -->
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Shtat qisqartmasini yozing</p>
+
+            <!-- State Name Display -->
+            <div id="stateNameContainer" class="min-h-[90px] flex items-center justify-center mb-8">
+                <h1 id="stateName" class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight leading-tight">
+                    California
+                </h1>
+            </div>
+
+            <!-- Input Form -->
+            <form id="quizForm" onsubmit="handleCheck(event)" class="space-y-5">
+                <div class="relative max-w-xs mx-auto">
+                    <input 
+                        type="text" 
+                        id="abbrInput" 
+                        maxlength="2" 
+                        placeholder="e.g. CA" 
+                        autocomplete="off" 
+                        autofocus
+                        class="w-full text-center text-3xl font-extrabold uppercase tracking-widest py-3.5 px-4 bg-gray-50 border-2 border-gray-200 rounded-2xl text-gray-900 placeholder-gray-300 focus:outline-none focus:border-black focus:bg-white transition-all duration-200 shadow-inner"
+                    />
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    type="submit" 
+                    id="submitBtn"
+                    class="w-full max-w-xs mx-auto bg-[#111] hover:bg-black text-white font-bold py-4 px-6 rounded-2xl btn-glow hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer border border-gray-800"
+                >
+                    <span>Javobni qabul qilish</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Progress Footer -->
+            <div class="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-gray-400">
+                <span>Jarayon</span>
+                <span id="progressText">1 / 50 Shtatlar</span>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FOOTER LOGO -->
+    <footer class="text-xs text-gray-400 font-medium">
+        Amerika logistikasi • Shtatlar qisqartma nomlari
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // BARCHA 50 TA AQSH SHTATLARI VA ULARNING QISQARTMALARI (ENGLIZ TILIDA)
+        const usStates = [
+            { name: "Alabama", abbr: "AL" },
+            { name: "Alaska", abbr: "AK" },
+            { name: "Arizona", abbr: "AZ" },
+            { name: "Arkansas", abbr: "AR" },
+            { name: "California", abbr: "CA" },
+            { name: "Colorado", abbr: "CO" },
+            { name: "Connecticut", abbr: "CT" },
+            { name: "Delaware", abbr: "DE" },
+            { name: "Florida", abbr: "FL" },
+            { name: "Georgia", abbr: "GA" },
+            { name: "Hawaii", abbr: "HI" },
+            { name: "Idaho", abbr: "ID" },
+            { name: "Illinois", abbr: "IL" },
+            { name: "Indiana", abbr: "IN" },
+            { name: "Iowa", abbr: "IA" },
+            { name: "Kansas", abbr: "KS" },
+            { name: "Kentucky", abbr: "KY" },
+            { name: "Louisiana", abbr: "LA" },
+            { name: "Maine", abbr: "ME" },
+            { name: "Maryland", abbr: "MD" },
+            { name: "Massachusetts", abbr: "MA" },
+            { name: "Michigan", abbr: "MI" },
+            { name: "Minnesota", abbr: "MN" },
+            { name: "Mississippi", abbr: "MS" },
+            { name: "Missouri", abbr: "MO" },
+            { name: "Montana", abbr: "MT" },
+            { name: "Nebraska", abbr: "NE" },
+            { name: "Nevada", abbr: "NV" },
+            { name: "New Hampshire", abbr: "NH" },
+            { name: "New Jersey", abbr: "NJ" },
+            { name: "New Mexico", abbr: "NM" },
+            { name: "New York", abbr: "NY" },
+            { name: "North Carolina", abbr: "NC" },
+            { name: "North Dakota", abbr: "ND" },
+            { name: "Ohio", abbr: "OH" },
+            { name: "Oklahoma", abbr: "OK" },
+            { name: "Oregon", abbr: "OR" },
+            { name: "Pennsylvania", abbr: "PA" },
+            { name: "Rhode Island", abbr: "RI" },
+            { name: "South Carolina", abbr: "SC" },
+            { name: "South Dakota", abbr: "SD" },
+            { name: "Tennessee", abbr: "TN" },
+            { name: "Texas", abbr: "TX" },
+            { name: "Utah", abbr: "UT" },
+            { name: "Vermont", abbr: "VT" },
+            { name: "Virginia", abbr: "VA" },
+            { name: "Washington", abbr: "WA" },
+            { name: "West Virginia", abbr: "WV" },
+            { name: "Wisconsin", abbr: "WI" },
+            { name: "Wyoming", abbr: "WY" }
+        ];
+
+        // O'yin xolati va hisoblagichlar
+        let gameStates = [];
+        let currentIndex = 0;
+        let correctCount = 0;
+        let attemptsCount = 0;
+        let isProcessing = false;
+
+        // DOM Elementlari
+        const stateNameEl = document.getElementById('stateName');
+        const abbrInput = document.getElementById('abbrInput');
+        const correctScoreEl = document.getElementById('correctScore');
+        const attemptsScoreEl = document.getElementById('attemptsScore');
+        const progressTextEl = document.getElementById('progressText');
+        const gameCard = document.getElementById('gameCard');
+
+        // Massivni tasodifiy aralashtirish (Fisher-Yates Shuffle)
+        function shuffle(array) {
+            let shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // O'yinni boshlash
+        function initGame() {
+            gameStates = shuffle(usStates);
+            currentIndex = 0;
+            correctCount = 0;
+            attemptsCount = 0;
+            updateScores();
+            loadCurrentState();
+        }
+
+        // Joriy shtatni yuklash
+        function loadCurrentState() {
+            if (currentIndex >= gameStates.length) {
+                // Hamma 50 ta shtat tugagandagi yakuniy xabar
+                alert(`🎉 Tabriklaymiz! Siz barcha 50 ta shtatni tugatdingiz!\nUrinishlar soni: ${attemptsCount}`);
+                initGame();
+                return;
+            }
+
+            const state = gameStates[currentIndex];
+            stateNameEl.textContent = state.name;
+            progressTextEl.textContent = `${currentIndex + 1} / ${gameStates.length} Shtatlar`;
+
+            // Inputni tozalash va e'tiborni qaratish (focus)
+            abbrInput.value = '';
+            abbrInput.focus();
+
+            // Animatsiya qo'shish
+            gameCard.classList.remove('pop-in');
+            void gameCard.offsetWidth; // reflow
+            gameCard.classList.add('pop-in');
+        }
+
+        // Statistikani yangilash
+        function updateScores() {
+            correctScoreEl.textContent = correctCount;
+            attemptsScoreEl.textContent = attemptsCount;
+        }
+
+        // Kiritilgan harflarni avtomatik katta harfga o'tkazish
+        abbrInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Javobni tekshirish funksiyasi
+        function handleCheck(e) {
+            e.preventDefault();
+            if (isProcessing) return;
+
+            const userVal = abbrInput.value.trim().toUpperCase();
+            if (!userVal) return;
+
+            isProcessing = true;
+            attemptsCount++;
+
+            const currentState = gameStates[currentIndex];
+
+            if (userVal === currentState.abbr) {
+                // === TO'G'RI JAVOB ===
+                correctCount++;
+                updateScores();
+
+                // Ekran silliq yashil bo'ladi
+                document.body.classList.add('flash-correct');
+
+                setTimeout(() => {
+                    document.body.classList.remove('flash-correct');
+                    currentIndex++;
+                    loadCurrentState();
+                    isProcessing = false;
+                }, 500);
+
+            } else {
+                // === NOTO'G'RI JAVOB ===
+                updateScores();
+
+                // Ekran silliq qizil bo'ladi va karta titraydi
+                document.body.classList.add('flash-incorrect');
+                gameCard.classList.add('shake-anim');
+
+                // Input chegarasini qizil qilish
+                abbrInput.classList.add('border-rose-500', 'bg-rose-50');
+
+                setTimeout(() => {
+                    document.body.classList.remove('flash-incorrect');
+                    gameCard.classList.remove('shake-anim');
+                    abbrInput.classList.remove('border-rose-500', 'bg-rose-50');
+                    
+                    abbrInput.value = '';
+                    abbrInput.focus();
+                    isProcessing = false;
+                }, 550);
+            }
+        }
+
+        // Sahifa yuklanishi bilan o'yinni ishga tushirish
+        window.addEventListener('DOMContentLoaded', () => {
+            initGame();
+        });
+    </script>
+</body>
+</html>
